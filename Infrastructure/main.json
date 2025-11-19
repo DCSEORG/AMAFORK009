@@ -1,0 +1,504 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "15715702852964716587"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "uksouth",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "baseName": {
+      "type": "string",
+      "defaultValue": "expensemgmt",
+      "metadata": {
+        "description": "Base name for resources"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "Environment suffix"
+      }
+    },
+    "resourceGroupName": {
+      "type": "string",
+      "defaultValue": "[format('rg-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+      "metadata": {
+        "description": "Resource group name"
+      }
+    },
+    "includeChatUI": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Deploy GenAI resources (set to false to skip Chat UI infrastructure)"
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "defaultValue": "[utcNow('ddHHmm')]",
+      "metadata": {
+        "description": "Timestamp for unique naming"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2023-07-01",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "managedIdentityDeployment",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "timestamp": {
+            "value": "[parameters('timestamp')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "1026637537741660598"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "uksouth",
+              "metadata": {
+                "description": "Location for all resources"
+              }
+            },
+            "timestamp": {
+              "type": "string",
+              "defaultValue": "[utcNow('ddHHmm')]",
+              "metadata": {
+                "description": "Timestamp for unique naming"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[format('mid-AppModAssist-{0}', parameters('timestamp'))]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "managedIdentityName": {
+              "type": "string",
+              "value": "[format('mid-AppModAssist-{0}', parameters('timestamp'))]"
+            },
+            "managedIdentityClientId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-AppModAssist-{0}', parameters('timestamp'))), '2023-01-31').clientId]"
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-AppModAssist-{0}', parameters('timestamp')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appServiceDeployment",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "baseName": {
+            "value": "[parameters('baseName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "timestamp": {
+            "value": "[parameters('timestamp')]"
+          },
+          "managedIdentityClientId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityClientId.value]"
+          },
+          "managedIdentityId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "14834636131957252079"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "uksouth",
+              "metadata": {
+                "description": "Location for all resources"
+              }
+            },
+            "baseName": {
+              "type": "string",
+              "defaultValue": "expensemgmt",
+              "metadata": {
+                "description": "Base name for resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev",
+              "metadata": {
+                "description": "Environment suffix"
+              }
+            },
+            "timestamp": {
+              "type": "string",
+              "defaultValue": "[utcNow('ddHHmm')]",
+              "metadata": {
+                "description": "Timestamp for unique naming"
+              }
+            },
+            "managedIdentityClientId": {
+              "type": "string",
+              "metadata": {
+                "description": "User Assigned Managed Identity Client ID"
+              }
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "metadata": {
+                "description": "User Assigned Managed Identity Resource ID"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-01-01",
+              "name": "[format('asp-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "B1",
+                "tier": "Basic",
+                "capacity": 1
+              },
+              "kind": "linux",
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-01-01",
+              "name": "[format('app-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), parameters('timestamp'))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('managedIdentityId'))]": {}
+                }
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}-{1}', parameters('baseName'), parameters('environment')))]",
+                "httpsOnly": true,
+                "siteConfig": {
+                  "linuxFxVersion": "DOTNETCORE|8.0",
+                  "alwaysOn": false,
+                  "ftpsState": "Disabled",
+                  "minTlsVersion": "1.2",
+                  "http20Enabled": true,
+                  "appSettings": [
+                    {
+                      "name": "WEBSITE_RUN_FROM_PACKAGE",
+                      "value": "1"
+                    },
+                    {
+                      "name": "ManagedIdentityClientId",
+                      "value": "[parameters('managedIdentityClientId')]"
+                    },
+                    {
+                      "name": "EnableChatUI",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}-{1}', parameters('baseName'), parameters('environment')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appServiceName": {
+              "type": "string",
+              "value": "[format('app-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), parameters('timestamp'))]"
+            },
+            "appServiceUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', format('app-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), parameters('timestamp'))), '2023-01-01').defaultHostName)]"
+            },
+            "appServiceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/sites', format('app-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), parameters('timestamp')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "genaiDeployment",
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "baseName": {
+            "value": "[parameters('baseName')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "includeChatUI": {
+            "value": "[parameters('includeChatUI')]"
+          },
+          "managedIdentityId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.38.33.27573",
+              "templateHash": "18376331134152813893"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "uksouth",
+              "metadata": {
+                "description": "Location for all resources"
+              }
+            },
+            "baseName": {
+              "type": "string",
+              "defaultValue": "expensemgmt",
+              "metadata": {
+                "description": "Base name for resources"
+              }
+            },
+            "environment": {
+              "type": "string",
+              "defaultValue": "dev",
+              "metadata": {
+                "description": "Environment suffix"
+              }
+            },
+            "includeChatUI": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Deploy GenAI resources"
+              }
+            },
+            "managedIdentityId": {
+              "type": "string",
+              "metadata": {
+                "description": "User Assigned Managed Identity Resource ID"
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('includeChatUI')]",
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2023-05-01",
+              "name": "[format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+              "location": "swedencentral",
+              "kind": "OpenAI",
+              "sku": {
+                "name": "S0"
+              },
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('managedIdentityId'))]": {}
+                }
+              },
+              "properties": {
+                "customSubDomainName": "[format('aoai-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), uniqueString(resourceGroup().id))]",
+                "publicNetworkAccess": "Enabled",
+                "networkAcls": {
+                  "defaultAction": "Allow"
+                }
+              }
+            },
+            {
+              "condition": "[parameters('includeChatUI')]",
+              "type": "Microsoft.CognitiveServices/accounts/deployments",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')), 'gpt-4o')]",
+              "sku": {
+                "name": "Standard",
+                "capacity": 10
+              },
+              "properties": {
+                "model": {
+                  "format": "OpenAI",
+                  "name": "gpt-4o",
+                  "version": "2024-05-13"
+                },
+                "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')))]"
+              ]
+            },
+            {
+              "condition": "[parameters('includeChatUI')]",
+              "type": "Microsoft.Search/searchServices",
+              "apiVersion": "2023-11-01",
+              "name": "[format('srch-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "basic"
+              },
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('managedIdentityId'))]": {}
+                }
+              },
+              "properties": {
+                "replicaCount": 1,
+                "partitionCount": 1,
+                "hostingMode": "default",
+                "publicNetworkAccess": "enabled"
+              }
+            }
+          ],
+          "outputs": {
+            "openAIEndpoint": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), reference(resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))), '2023-05-01').endpoint, '')]"
+            },
+            "openAIName": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')), '')]"
+            },
+            "openAIId": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))), '')]"
+            },
+            "searchEndpoint": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), format('https://{0}.search.windows.net', format('srch-{0}-{1}', parameters('baseName'), parameters('environment'))), '')]"
+            },
+            "searchName": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), format('srch-{0}-{1}', parameters('baseName'), parameters('environment')), '')]"
+            },
+            "gpt4oDeploymentName": {
+              "type": "string",
+              "value": "[if(parameters('includeChatUI'), 'gpt-4o', '')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('resourceGroupName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[parameters('resourceGroupName')]"
+    },
+    "appServiceName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'appServiceDeployment'), '2025-04-01').outputs.appServiceName.value]"
+    },
+    "appServiceUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'appServiceDeployment'), '2025-04-01').outputs.appServiceUrl.value]"
+    },
+    "managedIdentityName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityName.value]"
+    },
+    "managedIdentityClientId": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'managedIdentityDeployment'), '2025-04-01').outputs.managedIdentityClientId.value]"
+    },
+    "openAIEndpoint": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'genaiDeployment'), '2025-04-01').outputs.openAIEndpoint.value]"
+    },
+    "searchEndpoint": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'genaiDeployment'), '2025-04-01').outputs.searchEndpoint.value]"
+    },
+    "gpt4oDeploymentName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'genaiDeployment'), '2025-04-01').outputs.gpt4oDeploymentName.value]"
+    }
+  }
+}

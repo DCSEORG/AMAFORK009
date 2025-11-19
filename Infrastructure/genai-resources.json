@@ -1,0 +1,142 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "18376331134152813893"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "uksouth",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "baseName": {
+      "type": "string",
+      "defaultValue": "expensemgmt",
+      "metadata": {
+        "description": "Base name for resources"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "Environment suffix"
+      }
+    },
+    "includeChatUI": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Deploy GenAI resources"
+      }
+    },
+    "managedIdentityId": {
+      "type": "string",
+      "metadata": {
+        "description": "User Assigned Managed Identity Resource ID"
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": "[parameters('includeChatUI')]",
+      "type": "Microsoft.CognitiveServices/accounts",
+      "apiVersion": "2023-05-01",
+      "name": "[format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+      "location": "swedencentral",
+      "kind": "OpenAI",
+      "sku": {
+        "name": "S0"
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', parameters('managedIdentityId'))]": {}
+        }
+      },
+      "properties": {
+        "customSubDomainName": "[format('aoai-{0}-{1}-{2}', parameters('baseName'), parameters('environment'), uniqueString(resourceGroup().id))]",
+        "publicNetworkAccess": "Enabled",
+        "networkAcls": {
+          "defaultAction": "Allow"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('includeChatUI')]",
+      "type": "Microsoft.CognitiveServices/accounts/deployments",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')), 'gpt-4o')]",
+      "sku": {
+        "name": "Standard",
+        "capacity": 10
+      },
+      "properties": {
+        "model": {
+          "format": "OpenAI",
+          "name": "gpt-4o",
+          "version": "2024-05-13"
+        },
+        "versionUpgradeOption": "OnceNewDefaultVersionAvailable"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('includeChatUI')]",
+      "type": "Microsoft.Search/searchServices",
+      "apiVersion": "2023-11-01",
+      "name": "[format('srch-{0}-{1}', parameters('baseName'), parameters('environment'))]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "basic"
+      },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', parameters('managedIdentityId'))]": {}
+        }
+      },
+      "properties": {
+        "replicaCount": 1,
+        "partitionCount": 1,
+        "hostingMode": "default",
+        "publicNetworkAccess": "enabled"
+      }
+    }
+  ],
+  "outputs": {
+    "openAIEndpoint": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), reference(resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))), '2023-05-01').endpoint, '')]"
+    },
+    "openAIName": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), format('aoai-{0}-{1}', parameters('baseName'), parameters('environment')), '')]"
+    },
+    "openAIId": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), resourceId('Microsoft.CognitiveServices/accounts', format('aoai-{0}-{1}', parameters('baseName'), parameters('environment'))), '')]"
+    },
+    "searchEndpoint": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), format('https://{0}.search.windows.net', format('srch-{0}-{1}', parameters('baseName'), parameters('environment'))), '')]"
+    },
+    "searchName": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), format('srch-{0}-{1}', parameters('baseName'), parameters('environment')), '')]"
+    },
+    "gpt4oDeploymentName": {
+      "type": "string",
+      "value": "[if(parameters('includeChatUI'), 'gpt-4o', '')]"
+    }
+  }
+}

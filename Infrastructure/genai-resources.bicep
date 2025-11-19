@@ -64,12 +64,6 @@ resource searchService 'Microsoft.Search/searchServices@2023-11-01' = if (includ
   sku: {
     name: 'basic'  // Basic tier for low-cost development
   }
-  identity: {
-    type: 'UserAssigned'
-    userAssignedIdentities: {
-      '${managedIdentityId}': {}
-    }
-  }
   properties: {
     replicaCount: 1
     partitionCount: 1

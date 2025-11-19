@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.38.33.27573",
+      "templateHash": "1026637537741660598"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "uksouth",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "timestamp": {
+      "type": "string",
+      "defaultValue": "[utcNow('ddHHmm')]",
+      "metadata": {
+        "description": "Timestamp for unique naming"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('mid-AppModAssist-{0}', parameters('timestamp'))]",
+      "location": "[parameters('location')]"
+    }
+  ],
+  "outputs": {
+    "managedIdentityName": {
+      "type": "string",
+      "value": "[format('mid-AppModAssist-{0}', parameters('timestamp'))]"
+    },
+    "managedIdentityClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-AppModAssist-{0}', parameters('timestamp'))), '2023-01-31').clientId]"
+    },
+    "managedIdentityId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('mid-AppModAssist-{0}', parameters('timestamp')))]"
+    }
+  }
+}
