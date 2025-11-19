@@ -1,0 +1,17 @@
+{
+  "AzureOpenAI": {
+    "Endpoint": "",
+    "DeploymentName": "gpt-4o",
+    "ApiVersion": "2024-05-13"
+  },
+  "AzureSearch": {
+    "Endpoint": "",
+    "IndexName": "expense-documents"
+  },
+  "EnableChatUI": true,
+  "ChatUISettings": {
+    "MaxTokens": 800,
+    "Temperature": 0.7,
+    "SystemPrompt": "You are an AI assistant for an Expense Management System. Help users manage their expenses, answer questions about expense policies, and perform expense-related tasks using the available functions. Be concise and helpful."
+  }
+}
