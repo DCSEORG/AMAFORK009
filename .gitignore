@@ -1,0 +1,26 @@
+# Build outputs
+app/bin/
+app/obj/
+app/publish/
+
+# IDE files
+.vs/
+.vscode/
+*.suo
+*.user
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+*.tmp
+
+# Don't ignore app.zip - we need this for deployment
+!app.zip
